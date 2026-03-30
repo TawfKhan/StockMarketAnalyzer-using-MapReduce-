@@ -1,15 +1,16 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Stock Market Analysis API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: analysis
+    description: Stock analysis operations
 paths:
   /healthz:
     get:
@@ -24,6 +25,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /analysis/upload:
+    post:
+      operationId: uploadAndAnalyze
+      tags: [analysis]
+      summary: Upload CSV files and run MapReduce analysis
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+              required:
+                - files
+      responses:
+        "200":
+          description: Analysis results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +66,89 @@ components:
           type: string
       required:
         - status
-
+    VolumeStatRecord:
+      type: object
+      properties:
+        symbol:
+          type: string
+        totalVolume:
+          type: number
+        avgVolume:
+          type: number
+        tradingDays:
+          type: integer
+        avgDailyReturn:
+          type: number
+        avgPriceRange:
+          type: number
+      required:
+        - symbol
+        - totalVolume
+        - avgVolume
+        - tradingDays
+        - avgDailyReturn
+        - avgPriceRange
+    Top10Record:
+      type: object
+      properties:
+        rank:
+          type: integer
+        symbol:
+          type: string
+        avgVolume:
+          type: number
+        totalVolume:
+          type: number
+      required:
+        - rank
+        - symbol
+        - avgVolume
+        - totalVolume
+    VolatilityRecord:
+      type: object
+      properties:
+        symbol:
+          type: string
+        avgPriceRange:
+          type: number
+        avgDailyReturn:
+          type: number
+        tradingDays:
+          type: integer
+      required:
+        - symbol
+        - avgPriceRange
+        - avgDailyReturn
+        - tradingDays
+    AnalysisResult:
+      type: object
+      properties:
+        volumeStats:
+          type: array
+          items:
+            $ref: "#/components/schemas/VolumeStatRecord"
+        top10:
+          type: array
+          items:
+            $ref: "#/components/schemas/Top10Record"
+        volatility:
+          type: array
+          items:
+            $ref: "#/components/schemas/VolatilityRecord"
+        filesProcessed:
+          type: integer
+        rowsProcessed:
+          type: integer
+      required:
+        - volumeStats
+        - top10
+        - volatility
+        - filesProcessed
+        - rowsProcessed
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

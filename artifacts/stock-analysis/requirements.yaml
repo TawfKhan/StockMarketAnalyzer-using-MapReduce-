@@ -1,0 +1,15 @@
+packages:
+  "recharts": "For rendering data-dense financial bar charts and graphs"
+  "framer-motion": "For premium staggered animations and the MapReduce terminal loader"
+  "lucide-react": "For beautiful crisp iconography"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes without style conflicts"
+
+images:
+  - path: "artifacts/stock-analysis/public/images/grid-bg.png"
+    description: "Abstract dark navy background with a subtle glowing cyan and emerald financial data grid and nodes, conveying a high-tech quantitative trading terminal aesthetic"
+    aspect_ratio: "16:9"
+
+notes:
+  - React Query hooks are imported from the generated client @workspace/api-client-react
+  - Simulating a MapReduce terminal loader for enhanced user experience during file processing

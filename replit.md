@@ -1,6 +1,12 @@
-# Workspace
+# Stock Market Trading Volume and Volatility Analysis (Hadoop MapReduce Simulation)
 
 ## Overview
+
+A full-stack web application that simulates Hadoop MapReduce to analyze stock market CSV data.
+Upload one or more CSV files to trigger a two-job MapReduce pipeline (Python), then view results
+in three output folders: Volume Statistics, Top 10 Stocks, and Volatility Analysis.
+
+## Workspace Overview
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
