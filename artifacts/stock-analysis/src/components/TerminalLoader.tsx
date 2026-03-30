@@ -14,41 +14,62 @@ const MAPREDUCE_LOGS = [
   { text: "Job 2: Top10HighestVolumeReducer selecting...", delay: 7000 },
   { text: "Job 2: Top 10 Stocks COMPLETED.", delay: 8000, success: true },
   { text: "Compiling Volatility Analysis metrics...", delay: 8500 },
-  { text: "Analysis successfully written to output folders.", delay: 9500, success: true }
+  { text: "Analysis successfully written to output folders.", delay: 9500, success: true },
 ];
 
-export function TerminalLoader({ isComplete }: { isComplete: boolean }) {
+const ANIMATION_DURATION = MAPREDUCE_LOGS[MAPREDUCE_LOGS.length - 1].delay + 400;
+
+interface TerminalLoaderProps {
+  apiComplete: boolean;
+  onAnimationDone: () => void;
+}
+
+export function TerminalLoader({ apiComplete, onAnimationDone }: TerminalLoaderProps) {
   const [logs, setLogs] = useState<typeof MAPREDUCE_LOGS>([]);
+  const [animFinished, setAnimFinished] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const onAnimationDoneRef = useRef(onAnimationDone);
+  onAnimationDoneRef.current = onAnimationDone;
 
   useEffect(() => {
-    let timeouts: ReturnType<typeof setTimeout>[] = [];
-    
-    // Process logs sequentially
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+
     MAPREDUCE_LOGS.forEach((log) => {
-      const timeout = setTimeout(() => {
+      const t = setTimeout(() => {
         setLogs(prev => [...prev, log]);
       }, log.delay);
-      timeouts.push(timeout);
+      timeouts.push(t);
     });
+
+    // Fire completion callback after the last log has been visible briefly
+    const doneTimeout = setTimeout(() => {
+      setAnimFinished(true);
+      onAnimationDoneRef.current();
+    }, ANIMATION_DURATION);
+    timeouts.push(doneTimeout);
 
     return () => timeouts.forEach(clearTimeout);
   }, []);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom as logs appear
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [logs]);
 
+  const isRunning = !animFinished || !apiComplete;
+
   return (
     <div className="w-full max-w-3xl mx-auto glass-panel rounded-xl overflow-hidden border border-primary/30 shadow-[0_0_30px_rgba(6,182,212,0.15)]">
       <div className="bg-black/60 px-4 py-2 border-b border-white/10 flex items-center gap-2">
         <TerminalSquare className="w-4 h-4 text-primary" />
         <span className="font-mono text-sm text-primary">hadoop@master:~/mapreduce-jobs$</span>
+        {!isRunning && (
+          <span className="ml-auto text-xs text-emerald-400 font-mono">COMPLETE</span>
+        )}
       </div>
-      <div 
+      <div
         ref={containerRef}
         className="p-6 font-mono text-sm h-64 overflow-y-auto flex flex-col gap-2"
       >
@@ -60,7 +81,9 @@ export function TerminalLoader({ isComplete }: { isComplete: boolean }) {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-start gap-3"
             >
-              <span className="text-muted-foreground mt-0.5">[{new Date().toISOString().split('T')[1].slice(0,8)}]</span>
+              <span className="text-muted-foreground mt-0.5">
+                [{new Date().toISOString().split('T')[1].slice(0, 8)}]
+              </span>
               <span className="flex-1 flex items-center gap-2">
                 {log.success ? (
                   <span className="text-emerald-400 font-semibold">{log.text}</span>
@@ -71,14 +94,25 @@ export function TerminalLoader({ isComplete }: { isComplete: boolean }) {
               </span>
             </motion.div>
           ))}
-          {!isComplete && logs.length < MAPREDUCE_LOGS.length && (
-            <motion.div 
+          {isRunning && logs.length < MAPREDUCE_LOGS.length && (
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex items-center gap-2 text-primary mt-2"
             >
               <Loader2 className="w-4 h-4 animate-spin" />
               <span className="animate-pulse">Processing...</span>
+            </motion.div>
+          )}
+          {/* API responded faster than animation — show waiting message */}
+          {apiComplete && !animFinished && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center gap-2 text-amber-400 mt-2 text-xs"
+            >
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>Analysis complete — finalizing output...</span>
             </motion.div>
           )}
         </AnimatePresence>

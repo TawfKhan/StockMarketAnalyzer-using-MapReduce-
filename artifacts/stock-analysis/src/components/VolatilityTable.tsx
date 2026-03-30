@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSortableData } from '@/hooks/use-analysis';
-import { formatCurrency, formatPercent, cn } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import type { VolatilityRecord } from '@workspace/api-client-react';
 

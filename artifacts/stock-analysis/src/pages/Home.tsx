@@ -28,7 +28,17 @@ export default function Home() {
   
   // Simulated Processing State for the MapReduce aesthetics
   const [isSimulating, setIsSimulating] = useState(false);
+  const [animationDone, setAnimationDone] = useState(false);
+  const [pendingResults, setPendingResults] = useState<AnalysisResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Show results only when BOTH the API has responded AND the animation has finished
+  useEffect(() => {
+    if (pendingResults && animationDone) {
+      setResults(pendingResults);
+      setIsSimulating(false);
+    }
+  }, [pendingResults, animationDone]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -69,19 +79,17 @@ export default function Home() {
     if (files.length === 0) return;
     
     setIsSimulating(true);
+    setAnimationDone(false);
+    setPendingResults(null);
     
-    // Convert File[] to Blob[] for the API
     const blobs = files.map(file => new Blob([file], { type: file.type }));
     
     mutation.mutate(
       { data: { files: blobs } },
       {
         onSuccess: (data) => {
-          // Wait for MapReduce terminal animation to complete (~10s sequence) before showing results
-          setTimeout(() => {
-            setResults(data);
-            setIsSimulating(false);
-          }, 10000); 
+          // Store results — they will display once the terminal animation also completes
+          setPendingResults(data);
         },
         onError: (err) => {
           toast({
@@ -90,6 +98,8 @@ export default function Home() {
             variant: "destructive"
           });
           setIsSimulating(false);
+          setAnimationDone(false);
+          setPendingResults(null);
         }
       }
     );
@@ -99,6 +109,8 @@ export default function Home() {
     setFiles([]);
     setResults(null);
     setIsSimulating(false);
+    setAnimationDone(false);
+    setPendingResults(null);
     setActiveTab('volume');
   };
 
@@ -216,7 +228,10 @@ export default function Home() {
               exit={{ opacity: 0 }}
               className="w-full flex justify-center py-12"
             >
-              <TerminalLoader isComplete={!!results} />
+              <TerminalLoader
+                apiComplete={!!pendingResults}
+                onAnimationDone={() => setAnimationDone(true)}
+              />
             </motion.div>
           )}
 
