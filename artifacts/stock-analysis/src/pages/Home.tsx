@@ -82,10 +82,8 @@ export default function Home() {
     setAnimationDone(false);
     setPendingResults(null);
     
-    const blobs = files.map(file => new Blob([file], { type: file.type }));
-    
     mutation.mutate(
-      { data: { files: blobs } },
+      { data: { files } },
       {
         onSuccess: (data) => {
           // Store results — they will display once the terminal animation also completes
